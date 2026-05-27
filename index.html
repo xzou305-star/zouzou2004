@@ -1,0 +1,850 @@
+<!DOCTYPE html><html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦴 骨骼疾病X光片AI诊断系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --background-color: #f5f6fa;
+            --card-color: #ffffff;
+            --text-color: #2c3e50;
+            --border-color: #dcdde1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 头部样式 */
+        .header {
+            background: var(--card-color);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+
+        .supported-diseases {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .disease-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            transition: transform 0.3s;
+        }
+
+        .disease-tag:hover {
+            transform: scale(1.05);
+        }
+
+        /* 主要内容区 */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-color);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* 上传区域 */
+        .upload-area {
+            border: 3px dashed var(--border-color);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafafa;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-area:hover {
+            border-color: var(--secondary-color);
+            background: #f0f8ff;
+        }
+
+        .upload-area.dragover {
+            border-color: var(--success-color);
+            background: #f0fff4;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 结果卡片 */
+        .result-section {
+            display: none;
+        }
+
+        .result-section.active {
+            display: block;
+        }
+
+        .diagnosis-result {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .diagnosis-result .disease-name {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .confidence-bar {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            height: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            background: white;
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        .probabilities {
+            margin-top: 20px;
+        }
+
+        .probability-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            gap: 10px;
+        }
+
+        .probability-label {
+            width: 150px;
+            font-weight: 500;
+        }
+
+        .probability-bar-container {
+            flex: 1;
+            background: #ecf0f1;
+            border-radius: 5px;
+            height: 25px;
+            overflow: hidden;
+        }
+
+        .probability-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            border-radius: 5px;
+            transition: width 1s ease;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            color: white;
+            font-size: 0.9em;
+        }
+
+        /* 画布容器 */
+        .canvas-container {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        #imageCanvas {
+            max-width: 100%;
+            border-radius: 10px;
+            display: block;
+        }
+
+        /* 医疗建议 */
+        .recommendations {
+            background: #fff3cd;
+            border-left: 4px solid var(--warning-color);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .recommendations h3 {
+            color: var(--warning-color);
+            margin-bottom: 10px;
+        }
+
+        .recommendations ul {
+            list-style-position: inside;
+            color: #856404;
+        }
+
+        .recommendations li {
+            margin: 5px 0;
+        }
+
+        /* 报告区 */
+        .report {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            white-space: pre-line;
+            font-family: monospace;
+        }
+
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            opacity: 0.8;
+        }
+
+        /* 按钮 */
+        .action-btn {
+            background: var(--secondary-color);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: transform 0.3s;
+            margin: 5px;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .warning-text {
+            color: var(--accent-color);
+            font-size: 0.9em;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>🦴 骨骼疾病X光片AI诊断系统</h1>
+            <p>上传骨骼X光片，获取AI辅助诊断结果</p>
+            <div class="supported-diseases">
+                <span class="disease-tag">骨折</span>
+                <span class="disease-tag">骨质疏松</span>
+                <span class="disease-tag">骨关节炎</span>
+                <span class="disease-tag">骨肉瘤</span>
+                <span class="disease-tag">类风湿性关节炎</span>
+                <span class="disease-tag">骨囊肿</span>
+                <span class="disease-tag">骨髓炎</span>
+                <span class="disease-tag">痛风性关节炎</span>
+                <span class="disease-tag">骨转移瘤</span>
+            </div>
+        </div>
+
+        <!-- 主要内容 -->
+        <div class="main-content">
+            <!-- 左侧：上传区域 -->
+            <div class="card">
+                <h2>📤 上传X光片</h2>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">🩻</div>
+                    <p style="font-size: 1.2em; color: #7f8c8d;">点击上传或拖放X光片图像</p>
+                    <p style="color: #95a5a6; margin-top: 10px;">支持 JPG, PNG, DICOM 格式</p>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                        选择文件
+                    </button>
+                    <img id="previewImage" class="preview-image" style="display: none;">
+                </div>
+                <div class="loading" id="loadingIndicator">
+                    <div class="spinner"></div>
+                    <p>正在分析X光片...</p>
+                    <p style="color: #7f8c8d;">AI正在检测骨骼结构和异常区域</p>
+                </div>
+                <div class="warning-text">
+                    ⚠️ 此系统仅供辅助参考，最终诊断请以医生意见为准
+                </div>
+            </div>
+
+            <!-- 右侧：结果展示 -->
+            <div class="card result-section" id="resultSection">
+                <h2>🔍 诊断结果</h2>
+                
+                <!-- 诊断结果 -->
+                <div class="diagnosis-result" id="diagnosisResult">
+                    <p style="font-size: 1.1em;">主要诊断</p>
+                    <div class="disease-name" id="diseaseName">--</div>
+                    <p>置信度</p>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" id="confidenceFill" style="width: 0%;"></div>
+                    </div>
+                    <p id="confidenceText" style="margin-top: 10px;">0%</p>
+                </div>
+
+                <!-- 疾病描述 -->
+                <div style="margin-top: 20px;">
+                    <h3>📋 病情描述</h3>
+                    <p id="diseaseDescription" style="color: #7f8c8d; margin-top: 10px;">--</p>
+                </div>
+
+                <!-- 概率分布 -->
+                <div class="probabilities" id="probabilitiesContainer">
+                    <h3>📊 各疾病概率分析</h3>
+                </div>
+
+                <!-- 异常区域 -->
+                <div id="anomalyRegions" style="margin-top: 20px;">
+                    <h3>🎯 检测到的异常区域</h3>
+                    <div id="anomalyList"></div>
+                </div>
+
+                <!-- 医疗建议 -->
+                <div class="recommendations" id="recommendations">
+                    <h3>💡 医疗建议</h3>
+                    <ul id="recommendationList"></ul>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="action-btn" onclick="resetAnalysis()">🔄 重新分析</button>
+                    <button class="action-btn" onclick="downloadReport()">📥 下载报告</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 可视化区域 -->
+        <div class="card result-section" id="visualizationSection" style="margin-bottom: 30px;">
+            <h2>🖼️ 可视化分析</h2>
+            <div class="canvas-container">
+                <canvas id="imageCanvas"></canvas>
+            </div>
+            <p style="text-align: center; color: #7f8c8d; margin-top: 10px;">
+                红色框标记为AI检测到的异常区域，颜色越深表示异常程度越高
+            </p>
+        </div>
+
+        <!-- 详细报告 -->
+        <div class="card result-section" id="reportSection" style="margin-bottom: 30px;">
+            <h2>📄 详细诊断报告</h2>
+            <div class="report" id="detailedReport"></div>
+        </div>
+
+        <!-- 页脚 -->
+        <div class="footer">
+            <p>骨骼疾病X光片AI诊断系统 v1.0 | 仅供辅助诊断参考</p>
+        </div>
+    </div>
+
+    <script>
+        // 疾病数据
+        const BONE_DISEASES = {
+            'normal': '正常骨骼',
+            'fracture': '骨折',
+            'osteoporosis': '骨质疏松',
+            'osteoarthritis': '骨关节炎',
+            'osteosarcoma': '骨肉瘤',
+            'rheumatoid_arthritis': '类风湿性关节炎',
+            'bone_cyst': '骨囊肿',
+            'osteomyelitis': '骨髓炎',
+            'gout': '痛风性关节炎',
+            'bone_metastasis': '骨转移瘤'
+        };
+
+        const DISEASE_DESCRIPTIONS = {
+            'normal': '骨骼结构正常，未见明显异常，骨密度正常，关节间隙正常。',
+            'fracture': '骨皮质连续性中断，可见明显骨折线，周围软组织肿胀。',
+            'osteoporosis': '骨密度明显降低，骨小梁稀疏变细，骨皮质变薄。',
+            'osteoarthritis': '关节间隙明显变窄，关节面硬化，边缘骨赘形成。',
+            'osteosarcoma': '骨质破坏性病变，可见不规则骨膜反应，软组织肿块。',
+            'rheumatoid_arthritis': '关节周围软组织肿胀，关节间隙变窄，骨质疏松。',
+            'bone_cyst': '骨质内可见囊性低密度区，边界清晰，骨皮质变薄。',
+            'osteomyelitis': '骨质破坏伴周围软组织肿胀，可见死骨形成。',
+            'gout': '关节旁可见穿凿样骨质破坏，边缘硬化。',
+            'bone_metastasis': '多发性溶骨性或成骨性病变，边界不清。'
+        };
+
+        const RECOMMENDATIONS = {
+            'normal': ['骨骼结构正常，建议定期体检', '保持健康的生活方式', '适当运动增强骨骼健康'],
+            'fracture': ['建议立即就医，进行专业骨折固定', '避免移动受伤部位', '及时进行影像学复查'],
+            'osteoporosis': ['进行骨密度检查确认诊断', '补充钙剂和维生素D', '进行适当的负重运动'],
+            'osteoarthritis': ['适当休息，减少关节负重', '物理治疗缓解症状', '必要时使用消炎止痛药物'],
+            'osteosarcoma': ['紧急就医，需进行活检确诊', '可能需要多学科综合治疗', '进行全身检查排除转移'],
+            'rheumatoid_arthritis': ['风湿免疫科就诊', '早期规范治疗延缓疾病进展', '定期随访监测病情'],
+            'bone_cyst': ['定期观察囊肿变化', '如有症状可考虑手术治疗', '避免剧烈运动防止病理性骨折'],
+            'osteomyelitis': ['及时使用抗生素治疗', '必要时进行手术清创', '定期复查监测治疗效果'],
+            'gout': ['控制饮食，减少高嘌呤食物', '药物治疗控制尿酸水平', '多饮水促进尿酸排泄'],
+            'bone_metastasis': ['查找原发肿瘤', '多学科综合治疗', '控制疼痛，提高生活质量']
+        };
+
+        let uploadedImage = null;
+        let analysisResult = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            setupUploadArea();
+            setupFileInput();
+        });
+
+        // 设置上传区域
+        function setupUploadArea() {
+            const uploadArea = document.getElementById('uploadArea');
+            
+            // 点击上传
+            uploadArea.addEventListener('click', function(e) {
+                if (e.target !== document.querySelector('.upload-btn')) {
+                    document.getElementById('fileInput').click();
+                }
+            });
+
+            // 拖放上传
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+        }
+
+        // 设置文件输入
+        function setupFileInput() {
+            const fileInput = document.getElementById('fileInput');
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    handleFile(e.target.files[0]);
+                }
+            });
+        }
+
+        // 处理文件
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('请上传图像文件！');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadedImage = e.target.result;
+                
+                // 显示预览
+                const preview = document.getElementById('previewImage');
+                preview.src = uploadedImage;
+                preview.style.display = 'block';
+                
+                // 隐藏上传图标
+                document.querySelector('.upload-icon').style.display = 'none';
+                document.querySelector('.upload-btn').style.display = 'none';
+                document.querySelector('#uploadArea p').style.display = 'none';
+
+                // 开始分析
+                analyzeImage(uploadedImage);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 分析图像（模拟AI分析）
+        async function analyzeImage(imageData) {
+            // 显示加载动画
+            document.getElementById('loadingIndicator').classList.add('active');
+            
+            // 模拟分析延迟
+            await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000));
+            
+            // 生成模拟结果
+            const result = generateMockResult();
+            analysisResult = result;
+            
+            // 隐藏加载动画
+            document.getElementById('loadingIndicator').classList.remove('active');
+            
+            // 显示结果
+            displayResults(result);
+            
+            // 绘制可视化
+            drawVisualization(imageData, result);
+        }
+
+        // 生成模拟结果
+        function generateMockResult() {
+            const diseases = Object.keys(BONE_DISEASES);
+            const probabilities = {};
+            let remaining = 1.0;
+            
+            // 随机选择主要疾病
+            const mainDisease = diseases[Math.floor(Math.random() * diseases.length)];
+            
+            // 生成概率分布
+            diseases.forEach(disease => {
+                if (disease === mainDisease) {
+                    probabilities[disease] = 0.4 + Math.random() * 0.4;
+                } else {
+                    probabilities[disease] = Math.random() * 0.1;
+                }
+            });
+            
+            // 归一化
+            const total = Object.values(probabilities).reduce((a, b) => a + b, 0);
+            Object.keys(probabilities).forEach(key => {
+                probabilities[key] /= total;
+            });
+            
+            // 生成异常区域
+            const anomalyRegions = [];
+            if (mainDisease !== 'normal') {
+                const numRegions = 1 + Math.floor(Math.random() * 3);
+                for (let i = 0; i < numRegions; i++) {
+                    anomalyRegions.push({
+                        x: Math.random() * 0.6 + 0.1,
+                        y: Math.random() * 0.6 + 0.1,
+                        width: Math.random() * 0.3 + 0.1,
+                        height: Math.random() * 0.3 + 0.1,
+                        confidence: 0.6 + Math.random() * 0.4
+                    });
+                }
+            }
+            
+            return {
+                mainDisease: mainDisease,
+                mainConfidence: probabilities[mainDisease],
+                probabilities: probabilities,
+                anomalyRegions: anomalyRegions
+            };
+        }
+
+        // 显示结果
+        function displayResults(result) {
+            // 显示结果区域
+            document.querySelectorAll('.result-section').forEach(el => {
+                el.classList.add('active');
+            });
+            
+            // 更新诊断结果
+            document.getElementById('diseaseName').textContent = BONE_DISEASES[result.mainDisease];
+            document.getElementById('confidenceText').textContent = 
+                (result.mainConfidence * 100).toFixed(1) + '%';
+            document.getElementById('confidenceFill').style.width = 
+                (result.mainConfidence * 100) + '%';
+            
+            // 更新疾病描述
+            document.getElementById('diseaseDescription').textContent = 
+                DISEASE_DESCRIPTIONS[result.mainDisease];
+            
+            // 更新概率分布
+            updateProbabilities(result.probabilities);
+            
+            // 更新异常区域
+            updateAnomalyRegions(result.anomalyRegions);
+            
+            // 更新医疗建议
+            updateRecommendations(result.mainDisease);
+            
+            // 更新详细报告
+            updateDetailedReport(result);
+        }
+
+        // 更新概率分布
+        function updateProbabilities(probabilities) {
+            const container = document.getElementById('probabilitiesContainer');
+            container.innerHTML = '<h3>📊 各疾病概率分析</h3>';
+            
+            const sorted = Object.entries(probabilities)
+                .sort((a, b) => b[1] - a[1]);
+            
+            sorted.forEach(([disease, prob]) => {
+                const percent = (prob * 100).toFixed(1);
+                const item = document.createElement('div');
+                item.className = 'probability-item';
+                item.innerHTML = `
+                    <div class="probability-label">${BONE_DISEASES[disease]}</div>
+                    <div class="probability-bar-container">
+                        <div class="probability-bar" style="width: ${percent}%">
+                            ${percent}%
+                        </div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // 更新异常区域
+        function updateAnomalyRegions(regions) {
+            const list = document.getElementById('anomalyList');
+            if (regions.length === 0) {
+                list.innerHTML = '<p style="color: #27ae60;">✅ 未检测到明显异常区域</p>';
+            } else {
+                let html = '';
+                regions.forEach((region, index) => {
+                    html += `
+                        <div style="background: #ffeaa7; padding: 10px; border-radius: 10px; margin: 10px 0;">
+                            <strong>异常区域 ${index + 1}:</strong>
+                            <p>位置: (${(region.x * 100).toFixed(1)}%, ${(region.y * 100).toFixed(1)}%)</p>
+                            <p>大小: ${(region.width * 100).toFixed(1)}% × ${(region.height * 100).toFixed(1)}%</p>
+                            <p>异常程度: ${(region.confidence * 100).toFixed(1)}%</p>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            }
+        }
+
+        // 更新医疗建议
+        function updateRecommendations(disease) {
+            const list = document.getElementById('recommendationList');
+            const recommendations = RECOMMENDATIONS[disease];
+            list.innerHTML = recommendations.map(rec => `<li>${rec}</li>`).join('');
+        }
+
+        // 更新详细报告
+        function updateDetailedReport(result) {
+            const report = document.getElementById('detailedReport');
+            const sortedProbs = Object.entries(result.probabilities)
+                .sort((a, b) => b[1] - a[1]);
+            
+            let reportText = `
+        ╔══════════════════════════════════════════════════════╗
+        ║           骨骼疾病X光诊断报告                        ║
+        ╚══════════════════════════════════════════════════════╝
+
+        【诊断结果】
+          疾病类型: ${BONE_DISEASES[result.mainDisease]}
+          置信度: ${(result.mainConfidence * 100).toFixed(1)}%
+          病情描述: ${DISEASE_DESCRIPTIONS[result.mainDisease]}
+
+        【异常区域】
+          检测到异常区域数量: ${result.anomalyRegions.length}
+        `;
+            
+            if (result.anomalyRegions.length > 0) {
+                result.anomalyRegions.forEach((region, i) => {
+                    reportText += `
+          异常区域 ${i + 1}:
+            - 位置: (${(region.x * 100).toFixed(1)}%, ${(region.y * 100).toFixed(1)}%)
+            - 大小: ${(region.width * 100).toFixed(1)}% × ${(region.height * 100).toFixed(1)}%
+            - 异常程度: ${(region.confidence * 100).toFixed(1)}%
+        `;
+                });
+            }
+            
+            reportText += `
+        【详细分析】
+        `;
+            
+            sortedProbs.slice(0, 5).forEach(([disease, prob]) => {
+                const bar = '█'.repeat(Math.floor(prob * 20)) + '░'.repeat(20 - Math.floor(prob * 20));
+                reportText += `  ${BONE_DISEASES[disease].padEnd(12)} [${bar}] ${(prob * 100).toFixed(1)}%\n`;
+            });
+            
+            reportText += `
+        【建议】
+        `;
+            
+            RECOMMENDATIONS[result.mainDisease].forEach(rec => {
+                reportText += `  ${rec}\n`;
+            });
+            
+            reportText += `
+        ╔══════════════════════════════════════════════════════╗
+        ║  免责声明：此诊断为AI辅助诊断，仅供参考              ║
+        ║  最终诊断请以医生意见为准                            ║
+        ╚══════════════════════════════════════════════════════╝
+            `;
+            
+            report.innerHTML = reportText;
+        }
+
+        // 绘制可视化
+        function drawVisualization(imageData, result) {
+            const canvas = document.getElementById('imageCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            const img = new Image();
+            img.onload = function() {
+                // 设置canvas大小
+                const maxWidth = 800;
+                const scale = Math.min(maxWidth / img.width, 1);
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                
+                // 绘制图像
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                // 绘制热图叠加
+                drawHeatmap(ctx, canvas.width, canvas.height, result);
+                
+                // 绘制异常区域
+                drawAnomalyBoxes(ctx, canvas.width, canvas.height, result.anomalyRegions);
+                
+                // 添加标签
+                if (result.mainDisease !== 'normal') {
+                    ctx.font = 'bold 20px Arial';
+                    ctx.fillStyle = 'white';
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 3;
+                    const text = BONE_DISEASES[result.mainDisease];
+                    const textWidth = ctx.measureText(text).width;
+                    const x = (canvas.width - textWidth) / 2;
+                    ctx.strokeText(text, x, 40);
+                    ctx.fillText(text, x, 40);
+                }
+            };
+            img.src = imageData;
+        }
+
+        // 绘制热图
+        function drawHeatmap(ctx, width, height, result) {
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            
+            // 创建简单的热图效果
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const idx = (y * width + x) * 4;
+                    
+                    // 计算该位置是否有异常
+                    let heatValue = 0;
+                    result.anomalyRegions.forEach(region => {
+                        const rx = region.x * width;
+                        const ry = region.y * height;
+                        const rw = region.width * width;
+                        const rh = region.height * height;
+                        
+                        if (x >= rx && x <= rx + rw && y >= ry && y <= ry + rh) {
+                            heatValue = Math.max(heatValue, region.confidence * 0.5);
+                        }
+                    });
+                    
+                    if (heatValue > 0 && result.mainDisease !== 'normal') {
+                        // 添加红色热图效果
+                        data[idx] = Math.min(255, data[idx] + 100);     // R
+                        data[idx + 1] = data[idx + 1] * 0.7;           // G
+                        data[idx + 2] = data[idx + 2] * 0.7;           // B
